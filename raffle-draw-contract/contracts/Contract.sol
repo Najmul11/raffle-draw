@@ -9,6 +9,7 @@ contract RaffleDraw {
         uint32 tickets;
     }
 
+
     uint16 totalCampaign;
 
     // campaign data
@@ -24,9 +25,8 @@ contract RaffleDraw {
         address[] allPlayersWithOdds;
 
         // players with entries
-        Player[] players;
+        Player[]  players;
 
-        mapping(address=>uint16) individualEntries;
 
         bool raffleStatus;
         bool prizeDistributed;
@@ -50,25 +50,30 @@ contract RaffleDraw {
         uint256 _ticketCost
         ) public onlyOwner{
 
-        Campaign memory newCampaign;
+        Campaign storage newCampaign = campaigns.push();
 
-        newCampaign.id=totalCampaign;
-        newCampaign.title=_title;
-        newCampaign.banner=_banner;
-        newCampaign.maxEntries=_maxEntries;
-        newCampaign.ticketCost=_ticketCost;
-        newCampaign.raffleStatus=true;
-        newCampaign.prizeDistributed=false;
+        newCampaign.id = totalCampaign;
+        newCampaign.title = _title;
+        newCampaign.banner = _banner;
+        newCampaign.maxEntries = _maxEntries;
+        newCampaign.ticketCost = _ticketCost;
+        newCampaign.raffleStatus = true;
+        newCampaign.prizeDistributed = false;
 
-        campaigns.push(newCampaign);
 
         totalCampaign++;
+    }
 
-    } 
-
-    function getAllCampaigns() public view returns(Campaign[] memory) {
+       function getAllCampaigns() public view returns(Campaign[] memory) {
         return campaigns;
     }
+
+    
+    function getSingleCampaign(uint16 _campaignId) public view returns(Campaign memory) {
+        Campaign memory targetCampaign = campaigns[_campaignId];
+        return targetCampaign ;
+    }
+
 
     function buyTicket(uint16 _campaignId, uint16 _entries) public payable{
         Campaign storage targetCampaign = campaigns[_campaignId];
@@ -83,7 +88,6 @@ contract RaffleDraw {
         targetCampaign.players.push(Player(msg.sender, _entries));
 
 
-        individualEntries[msg.sender] +=_entries;
 
         for (uint256 index = 0; index < _entries; index++) {
             targetCampaign.allPlayersWithOdds.push(msg.sender);
@@ -91,9 +95,17 @@ contract RaffleDraw {
     }
 
 
+    function endCampaign(uint16 _campaignId) public onlyOwner{
+        require(campaigns[_campaignId].raffleStatus, "Campaign is not live to end.");
 
-    function getEntriesOfIndividual(uint16 _campaignId, address _playerAddress) public returns(uint16){
-        Campaign memory targetCampaign=campaigns[_campaignId];
-        return targetCampaign.individualEntries[_playerAddress];
+        Campaign memory targetCampaign = campaigns[_campaignId];
+        targetCampaign.raffleStatus=false;
+    } 
+
+     function contractBalance() public  view returns(uint256){
+        return address(this).balance;
     }
+    
 }
+
+ 
