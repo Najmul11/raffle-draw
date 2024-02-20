@@ -132,6 +132,27 @@ contract RaffleDraw {
         require(_platformFee<=20)
         platformFee = _platformFee;
     } 
+
+
+    function selectWinner(uint16 _campaignId) public onlyOwner{
+        require(campaigns[_campaignId].allPlayersWithOdds.length > 0, "No players in the raffle");
+        require(!campaigns[_campaignId].raffleStatus, "Raffle is still on");
+
+        Campaign storage targetCampaign = campaigns[_campaignId];
+
+        // select winner
+        uint256 randomNumber = uint256(keccak256(abi.encodePacked(block.timestamp, blockhash(block.number - 1))));
+        uint256 winningIndex = randomNumber % targetCampaign.allPlayersWithOdds.length;
+        address payable winner = payable(targetCampaign.allPlayersWithOdds.[winningIndex]);
+
+        uint256 fee = (targetCampaign.totalEntries * 1 ether  *platformFee)/100;
+        uint256 winnerPrize =( targetCampaign.totalEntries * 1 ether )-fee;
+
+        (bool sent ,)=payable(winner).call{value:winnerPrize}("");
+
+        if(sent) owner.transfer(fee)
+
+    }
     
 }
 
