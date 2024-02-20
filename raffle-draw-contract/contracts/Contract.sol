@@ -21,7 +21,12 @@ contract RaffleDraw {
         uint16 totalEntries;
         uint256 ticketCost;
 
+        address[] allPlayersWithOdds;
+
+        // players with entries
         Player[] players;
+
+        mapping(address=>uint16) individualEntries;
 
         bool raffleStatus;
         bool prizeDistributed;
@@ -62,11 +67,11 @@ contract RaffleDraw {
     } 
 
     function getAllCampaigns() public view returns(Campaign[] memory) {
-        return campaigns
+        return campaigns;
     }
 
-    function buyTicket(uint16 _campaignId, uint16 _entries)public{
-        Campaign storage targetCampaign = campaigns[_campaignId]
+    function buyTicket(uint16 _campaignId, uint16 _entries) public payable{
+        Campaign storage targetCampaign = campaigns[_campaignId];
 
         require(targetCampaign.raffleStatus==true, "Campaign is not live at the moment");
         require(targetCampaign.maxEntries>targetCampaign.totalEntries , "No ticket left");
@@ -74,6 +79,21 @@ contract RaffleDraw {
 
         require(msg.value==_entries * targetCampaign.ticketCost * 1 ether, " Please send required amount" );
 
-        targetCampaign.totalEntries += _totalEntries;
+        targetCampaign.totalEntries += _entries;
+        targetCampaign.players.push(Player(msg.sender, _entries));
+
+
+        individualEntries[msg.sender] +=_entries;
+
+        for (uint256 index = 0; index < _entries; index++) {
+            targetCampaign.allPlayersWithOdds.push(msg.sender);
+        }
+    }
+
+
+
+    function getEntriesOfIndividual(uint16 _campaignId, address _playerAddress) public returns(uint16){
+        Campaign memory targetCampaign=campaigns[_campaignId];
+        return targetCampaign.individualEntries[_playerAddress];
     }
 }
