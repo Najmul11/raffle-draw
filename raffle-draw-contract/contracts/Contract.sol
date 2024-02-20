@@ -37,7 +37,7 @@ contract RaffleDraw {
 
     constructor(){
         owner= payable(msg.sender);
-        platformFee = 5
+        platformFee = 5;
     }
 
     modifier onlyOwner{
@@ -129,7 +129,7 @@ contract RaffleDraw {
     }
 
     function setPlatformFee(uint256 _platformFee) public onlyOwner{
-        require(_platformFee<=20)
+        require(_platformFee<=20);
         platformFee = _platformFee;
     } 
 
@@ -143,14 +143,14 @@ contract RaffleDraw {
         // select winner
         uint256 randomNumber = uint256(keccak256(abi.encodePacked(block.timestamp, blockhash(block.number - 1))));
         uint256 winningIndex = randomNumber % targetCampaign.allPlayersWithOdds.length;
-        address payable winner = payable(targetCampaign.allPlayersWithOdds.[winningIndex]);
+        address payable winner = payable(targetCampaign.allPlayersWithOdds[winningIndex]);
 
         uint256 fee = (targetCampaign.totalEntries * 1 ether  *platformFee)/100;
         uint256 winnerPrize =( targetCampaign.totalEntries * 1 ether )-fee;
 
         (bool sent ,)=payable(winner).call{value:winnerPrize}("");
 
-        if(sent) owner.transfer(fee)
+        if(sent) owner.transfer(fee);
 
     }
     
