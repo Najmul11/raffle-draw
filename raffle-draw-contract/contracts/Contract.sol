@@ -3,6 +3,7 @@ pragma solidity ^0.8.9;
 
 contract RaffleDraw {
     address payable public owner;
+    uint256 public platformFee;
 
     struct Player{
         address player;
@@ -36,6 +37,7 @@ contract RaffleDraw {
 
     constructor(){
         owner= payable(msg.sender);
+        platformFee = 5
     }
 
     modifier onlyOwner{
@@ -94,17 +96,42 @@ contract RaffleDraw {
         }
     }
 
+    function startRaffle (uint16 _campaignId) public onlyOwner{
+        require(!campaigns[_campaignId].raffleStatus, "Raffle is on already");
+        require(campaigns[_campaignId].prizeDistributed, "Please Select winner for previous raffle.");
+
+        Campaign storage targetCampaign = campaigns[_campaignId];
+        targetCampaign.raffleStatus=false;
+
+    }
+
 
     function endCampaign(uint16 _campaignId) public onlyOwner{
         require(campaigns[_campaignId].raffleStatus, "Campaign is not live to end.");
 
-        Campaign memory targetCampaign = campaigns[_campaignId];
+        Campaign storage targetCampaign = campaigns[_campaignId];
         targetCampaign.raffleStatus=false;
     } 
+
+
+    function changeTicketPrice(uint16 _campaignId, uint256 _ticketCost) public onlyOwner{
+        require(!campaigns[_campaignId].raffleStatus, "Raffle must be off. ");
+
+        require(campaigns[_campaignId].prizeDistributed, "Please distribute prize for the previous raffle. ");
+
+        Campaign storage targetCampaign = campaigns[_campaignId];
+
+        targetCampaign.ticketCost=_ticketCost;
+    }
 
      function contractBalance() public  view returns(uint256){
         return address(this).balance;
     }
+
+    function setPlatformFee(uint256 _platformFee) public onlyOwner{
+        require(_platformFee<=20)
+        platformFee = _platformFee;
+    } 
     
 }
 
