@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
-contract RaffleDraw {
+
+
+contract RaffleDraw is Helpers {
     address payable public owner;
     uint256 public platformFee;
 
@@ -35,6 +37,18 @@ contract RaffleDraw {
 
     Campaign[] public campaigns;
 
+    event CampaignCreated(uint16 indexed campaignId, string title, string banner);
+    event TicketBought(address indexed player, uint16 campaignId, uint16 entriesBought);
+    event RaffleStarted(uint16 indexed campaignId);
+    event CampaignEnded(uint16 indexed campaignId);
+    event TicketPriceChanged(uint16 indexed campaignId, uint256 newTicketCost);
+    event WinnerSelected(uint16 indexed campaignId, address winner, uint256 prizeAmount);
+    event CampaignReset(uint16 indexed campaignId);
+
+
+
+
+
     constructor(){
         owner= payable(msg.sender);
         platformFee = 5;
@@ -64,6 +78,8 @@ contract RaffleDraw {
 
 
         totalCampaign++;
+
+        emit CampaignCreated(newCampaign.id, newCampaign.title, newCampaign.banner);
     }
 
        function getAllCampaigns() public view returns(Campaign[] memory) {
@@ -90,10 +106,11 @@ contract RaffleDraw {
         targetCampaign.players.push(Player(msg.sender, _entries));
 
 
-
         for (uint256 index = 0; index < _entries; index++) {
             targetCampaign.allPlayersWithOdds.push(msg.sender);
         }
+
+        emit TicketBought(msg.sender, _campaignId, _entries);
     }
 
     function startRaffle (uint16 _campaignId) public onlyOwner{
@@ -103,6 +120,8 @@ contract RaffleDraw {
         Campaign storage targetCampaign = campaigns[_campaignId];
         targetCampaign.raffleStatus=false;
 
+        emit RaffleStarted(_campaignId);
+
     }
 
 
@@ -111,6 +130,8 @@ contract RaffleDraw {
 
         Campaign storage targetCampaign = campaigns[_campaignId];
         targetCampaign.raffleStatus=false;
+
+        emit CampaignEnded(_campaignId);
     } 
 
 
@@ -122,9 +143,11 @@ contract RaffleDraw {
         Campaign storage targetCampaign = campaigns[_campaignId];
 
         targetCampaign.ticketCost=_ticketCost;
+
+        emit TicketPriceChanged(_campaignId, _ticketCost);
     }
 
-     function contractBalance() public  view returns(uint256){
+    function contractBalance() public  view returns(uint256){
         return address(this).balance;
     }
 
@@ -152,6 +175,24 @@ contract RaffleDraw {
 
         if(sent) owner.transfer(fee);
 
+        emit WinnerSelected(_campaignId, winner, winnerPrize);
+
+        resetCampaign(_campaignId);
+
+    }
+
+
+    function resetCampaign(uint16 _campaignId) public onlyOwner {
+        Campaign storage targetCampaign = campaigns[_campaignId];
+
+        // Reset campaign data
+        targetCampaign.totalEntries = 0;
+        targetCampaign.raffleStatus = true;
+        targetCampaign.prizeDistributed = false;
+        delete targetCampaign.allPlayersWithOdds;
+        delete targetCampaign.players;
+
+        emit CampaignReset(_campaignId);
     }
     
 }
