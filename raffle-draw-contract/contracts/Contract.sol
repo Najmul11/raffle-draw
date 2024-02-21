@@ -3,7 +3,7 @@ pragma solidity ^0.8.9;
 
 
 
-contract RaffleDraw is Helpers {
+contract RaffleDraw  {
     address payable public owner;
     uint256 public platformFee;
 
